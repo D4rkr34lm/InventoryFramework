@@ -1,0 +1,6 @@
+name: InventoryFramework
+version: '1.0.0'
+main: de.steamwar.inventoryFramework.InventoryFramework
+api-version: '1.21'
+authors: [ D4rkr34lm ]
+description: A framework for inventory GUIs
