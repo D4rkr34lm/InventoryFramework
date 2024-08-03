@@ -5,48 +5,35 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
+import de.steamwar.InventoryRenderable;
 import net.kyori.adventure.text.Component;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javax.annotation.CheckForNull;
 
-public abstract class InventoryItem {
+public abstract class InventoryItem extends InventoryRenderable<InventoryItemConfig> {
     private final ItemStack item;
 
-    @NotNull
-    private InventoryItemConfig config;
-
-    @NotNull
-    private final Consumer<InventoryItem> onClick;
-
     @CheckForNull
-    private final Function<InventoryItemConfig, InventoryItemConfig> renderFunction;
+    private final Consumer<InventoryItemClickEvent> onClick;
 
-    public InventoryItem(@NotNull InventoryItemConfig config, Consumer<InventoryItem> onClick) {
-        this.onClick = onClick;
-        renderFunction = null;
+    public InventoryItem(@NotNull InventoryItemConfig config,
+            Supplier<InventoryItemConfig> renderFunction,
+            Consumer<InventoryItemClickEvent> onClick) {
 
         item = new ItemStack(config.material(), config.amount());
         applyConfig(config);
-    }
-
-    public InventoryItem(@NotNull InventoryItemConfig config,
-            @NotNull Function<InventoryItemConfig, InventoryItemConfig> renderFunction,
-            Consumer<InventoryItem> onClick) {
 
         this.onClick = onClick;
         this.renderFunction = renderFunction;
-
-        item = new ItemStack(config.material(), config.amount());
-        applyConfig(config);
     }
 
     public void rerender() {
         if (renderFunction == null)
             return;
-        InventoryItemConfig newConfig = renderFunction.apply(config);
+        InventoryItemConfig newConfig = renderFunction.get();
 
         if (!config.equals(newConfig)) {
             applyConfig(newConfig);
@@ -58,7 +45,10 @@ public abstract class InventoryItem {
         if (config.isEnchanted()) {
             meta.addEnchant(Enchantment.UNBREAKING, 10, true);
         }
-        config.labelsTranslationKeys().stream().forEach(key -> meta.lore().add(Component.translatable(item)));
+
+        if (config.labelTranslationKeys() != null) {
+            config.labelTranslationKeys().stream().forEach(key -> meta.lore().add(Component.translatable(item)));
+        }
         item.setItemMeta(meta);
 
         this.config = config;
